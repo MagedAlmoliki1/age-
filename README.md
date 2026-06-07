@@ -1,15 +1,20 @@
-# تقويم العمر · Age → Birth Year (Hijri & Gregorian)
+# احسب عمرك وبرجك · Age & Zodiac (Hijri & Gregorian)
 
-صفحة React بسيطة: أدخل عمرك لتعرف سنة ميلادك بالتقويمين **الهجري** و**الميلادي**.
+صفحة React: أدخل تاريخ ميلادك لتعرف **عمرك بالتفصيل**، و**برجك الفلكي**، وتاريخ ميلادك بالتقويمين **الهجري** و**الميلادي**.
 
-A single-page React app: enter your age and it shows your likely birth year in both the **Hijri** and **Gregorian** calendars.
+A single-page React app: enter your birth date to get your **exact age**, your **Western zodiac sign**, and your birth date in both the **Hijri** and **Gregorian** calendars.
 
 ## المميزات / Features
 
-- إدخال العمر بالسنوات فقط (الحقل المطلوب الوحيد) — *age in years only*
-- عرض سنة الميلاد كنطاق لأن تاريخ الميلاد الدقيق غير معروف — *birth year shown as a range*
-- تحويل هجري دقيق عبر `Intl.DateTimeFormat` بتقويم `islamic` (بدون مكتبات خارجية) — *accurate Hijri conversion, no external libraries*
+- إدخال تاريخ الميلاد كاملاً (يوم/شهر/سنة) — *full birth-date input*
+- حساب العمر الكامل بالسنوات والأشهر والأيام — *exact age in years / months / days*
+- تحديد البرج الفلكي الغربي (مثل العقرب) — *Western zodiac sign (e.g. Scorpio)*
+- التاريخ الهجري الدقيق عبر تقويم أم القرى (`Intl.DateTimeFormat`) — *accurate Umm al-Qura Hijri date, no external libraries*
 - واجهة عربية RTL بتصميم "إسطرلاب فلكي" وخط Cairo — *Arabic RTL "astrolabe" theme, Cairo font*
+
+## السعر / Pricing
+
+قيمة النظام: **$1000** — *System value: $1000* (display only; no checkout).
 
 ## التشغيل / Run
 

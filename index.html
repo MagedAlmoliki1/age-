@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>تقويم العمر · هجري وميلادي</title>
+  <title>احسب عمرك وبرجك · هجري وميلادي</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -179,6 +179,31 @@
     }
     .field { animation: fade 0.9s var(--ease) 0.38s both; }
     .row { display: flex; gap: 12px; }
+    .date-grid { display: grid; grid-template-columns: 1fr 1.4fr 1.1fr; gap: 10px; }
+    .date-grid .col { display: flex; flex-direction: column; gap: 6px; }
+    .date-grid .col small { font-size: 11px; color: var(--parchment-dim); text-align: center; }
+
+    select {
+      width: 100%;
+      padding: 14px 12px;
+      font-family: var(--font-display);
+      font-size: 17px;
+      text-align: center;
+      text-align-last: center;
+      color: var(--star);
+      background: rgba(7,10,28,0.6);
+      border: 1.5px solid rgba(212,175,55,0.30);
+      border-radius: 12px;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.25s var(--ease), box-shadow 0.25s var(--ease), background 0.25s;
+    }
+    select:focus {
+      border-color: var(--brass-500);
+      background: rgba(7,10,28,0.85);
+      box-shadow: 0 0 0 4px rgba(212,175,55,0.12);
+    }
+    select option { background: var(--ink-800); color: var(--star); }
 
     input {
       flex: 1;
@@ -298,6 +323,82 @@
       line-height: 1.6;
     }
 
+    /* ===== العمر الكامل ===== */
+    .age-exact {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+      animation: revealCard 0.7s var(--ease) both;
+    }
+    .age-cell {
+      background: linear-gradient(180deg, rgba(212,175,55,0.16), rgba(11,16,38,0.4));
+      border: 1px solid rgba(212,175,55,0.3);
+      border-radius: 12px;
+      padding: 14px 6px;
+      text-align: center;
+    }
+    .age-cell .num {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(26px, 8vw, 34px);
+      color: var(--star);
+      line-height: 1;
+    }
+    .age-cell .lbl { font-size: 12px; color: var(--brass-400); margin-top: 6px; }
+
+    /* ===== البرج ===== */
+    .zodiac {
+      position: relative;
+      display: flex; align-items: center; gap: 16px;
+      background: linear-gradient(180deg, rgba(35,44,102,0.6), rgba(11,16,38,0.6));
+      border: 1px solid rgba(212,175,55,0.3);
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 14px;
+      overflow: hidden;
+      animation: revealCard 0.7s var(--ease) 0.1s both;
+    }
+    .zodiac::before {
+      content: ""; position: absolute; top: 0; bottom: 0; right: 0; width: 4px;
+      background: linear-gradient(180deg, var(--brass-400), var(--brass-600));
+    }
+    .zodiac .glyph {
+      font-size: 42px; line-height: 1;
+      color: var(--brass-400);
+      text-shadow: 0 0 18px rgba(212,175,55,0.5);
+      animation: floatGlyph 3.5s ease-in-out infinite;
+    }
+    @keyframes floatGlyph { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+    .zodiac .meta .k { font-size: 13px; color: var(--brass-400); margin-bottom: 4px; }
+    .zodiac .meta .name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 26px;
+      color: var(--star);
+      line-height: 1.1;
+    }
+    .zodiac .meta .range { font-size: 12px; color: var(--parchment-dim); margin-top: 4px; }
+
+    /* ===== شارة السعر ===== */
+    .price-badge {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      margin-top: 24px;
+      padding: 12px 18px;
+      border: 1px dashed rgba(212,175,55,0.5);
+      border-radius: 12px;
+      background: rgba(212,175,55,0.06);
+      animation: fade 0.9s var(--ease) 0.45s both;
+    }
+    .price-badge .tag { font-size: 13px; color: var(--parchment-dim); }
+    .price-badge .amt {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 22px;
+      color: var(--brass-400);
+      text-shadow: 0 0 14px rgba(212,175,55,0.35);
+    }
+
     .footer {
       text-align: center;
       margin-top: 22px;
@@ -322,112 +423,158 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
 
-    function gregorianYearToHijri(gYear) {
-      const date = new Date(gYear, 6, 1); // 1 يوليو
-      const formatted = new Intl.DateTimeFormat("en-u-ca-islamic", { year: "numeric" }).format(date);
-      const m = formatted.match(/\d+/);
-      return m ? parseInt(m[0], 10) : null;
-    }
-
     function toArabicDigits(value) {
       const map = { "0":"٠","1":"١","2":"٢","3":"٣","4":"٤","5":"٥","6":"٦","7":"٧","8":"٨","9":"٩" };
       return String(value).replace(/[0-9]/g, (d) => map[d]);
     }
 
-    // عدّاد تصاعدي للسنة (إحساس "قراءة فلكية")
-    function useCountUp(target, run, duration = 800) {
-      const [val, setVal] = useState(target);
-      const raf = useRef(null);
-      useEffect(() => {
-        if (target == null || !run) { setVal(target); return; }
-        const start = Math.max(0, target - 60);
-        const t0 = performance.now();
-        const tick = (t) => {
-          const p = Math.min(1, (t - t0) / duration);
-          const eased = 1 - Math.pow(1 - p, 3);
-          setVal(Math.round(start + (target - start) * eased));
-          if (p < 1) raf.current = requestAnimationFrame(tick);
-        };
-        raf.current = requestAnimationFrame(tick);
-        return () => cancelAnimationFrame(raf.current);
-      }, [target, run]);
-      return val;
+    // التاريخ الهجري الكامل لتاريخ ميلادي معيّن
+    function toHijriParts(date) {
+      const fmt = new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura", {
+        day: "numeric", month: "long", year: "numeric",
+      });
+      return fmt.format(date); // مثل: ١٥ رمضان ١٤٤٥ هـ
     }
 
-    function Reading({ kicker, earliest, latest, unit, note, run, glyph }) {
-      const a = useCountUp(earliest, run);
-      const b = useCountUp(latest, run);
-      const txt = earliest === latest
-        ? toArabicDigits(b)
-        : `${toArabicDigits(a)} – ${toArabicDigits(b)}`;
+    // حساب العمر الكامل بالسنوات والأشهر والأيام
+    function exactAge(birth, today) {
+      let y = today.getFullYear() - birth.getFullYear();
+      let m = today.getMonth() - birth.getMonth();
+      let d = today.getDate() - birth.getDate();
+      if (d < 0) {
+        m -= 1;
+        // عدد أيام الشهر السابق للتاريخ الحالي
+        const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+        d += prevMonth;
+      }
+      if (m < 0) { y -= 1; m += 12; }
+      return { years: y, months: m, days: d };
+    }
+
+    // الأبراج الفلكية (الغربية) — بالترتيب مع حدود التواريخ
+    const ZODIAC = [
+      { name: "الجَدْي",   glyph: "♑", from: [12, 22], to: [1, 19],  range: "٢٢ ديسمبر – ١٩ يناير" },
+      { name: "الدَّلو",   glyph: "♒", from: [1, 20],  to: [2, 18],  range: "٢٠ يناير – ١٨ فبراير" },
+      { name: "الحُوت",    glyph: "♓", from: [2, 19],  to: [3, 20],  range: "١٩ فبراير – ٢٠ مارس" },
+      { name: "الحَمَل",   glyph: "♈", from: [3, 21],  to: [4, 19],  range: "٢١ مارس – ١٩ أبريل" },
+      { name: "الثَّور",   glyph: "♉", from: [4, 20],  to: [5, 20],  range: "٢٠ أبريل – ٢٠ مايو" },
+      { name: "الجَوزاء",  glyph: "♊", from: [5, 21],  to: [6, 20],  range: "٢١ مايو – ٢٠ يونيو" },
+      { name: "السَّرَطان",glyph: "♋", from: [6, 21],  to: [7, 22],  range: "٢١ يونيو – ٢٢ يوليو" },
+      { name: "الأسَد",    glyph: "♌", from: [7, 23],  to: [8, 22],  range: "٢٣ يوليو – ٢٢ أغسطس" },
+      { name: "العَذراء",  glyph: "♍", from: [8, 23],  to: [9, 22],  range: "٢٣ أغسطس – ٢٢ سبتمبر" },
+      { name: "الميزان",   glyph: "♎", from: [9, 23],  to: [10, 22], range: "٢٣ سبتمبر – ٢٢ أكتوبر" },
+      { name: "العَقرَب",  glyph: "♏", from: [10, 23], to: [11, 21], range: "٢٣ أكتوبر – ٢١ نوفمبر" },
+      { name: "القَوس",    glyph: "♐", from: [11, 22], to: [12, 21], range: "٢٢ نوفمبر – ٢١ ديسمبر" },
+    ];
+
+    function getZodiac(month, day) { // month: 1-12
+      for (const z of ZODIAC) {
+        const [fm, fd] = z.from, [tm, td] = z.to;
+        if (fm === tm) { if (month === fm && day >= fd && day <= td) return z; }
+        else if (
+          (month === fm && day >= fd) ||
+          (month === tm && day <= td)
+        ) return z;
+      }
+      // الجدي يلتف عبر نهاية السنة
+      return ZODIAC[0];
+    }
+
+    const MONTHS_AR = [
+      "يناير","فبراير","مارس","أبريل","مايو","يونيو",
+      "يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر",
+    ];
+
+    function Reading({ glyph, kicker, value, note }) {
       return (
         <div className="reading">
           <div className="k"><span>{glyph}</span>{kicker}</div>
-          <div className="v">{txt}<span className="unit">{unit}</span></div>
-          <div className="note">{note}</div>
+          <div className="v">{value}</div>
+          {note && <div className="note">{note}</div>}
         </div>
       );
     }
 
     function App() {
-      const TODAY = new Date(2026, 5, 7);
-      const currentGregYear = TODAY.getFullYear();
+      const TODAY = new Date(2026, 5, 7); // ٧ يونيو ٢٠٢٦
+      const thisYear = TODAY.getFullYear();
 
-      const [age, setAge] = useState("");
+      const [day, setDay] = useState("");
+      const [month, setMonth] = useState("");
+      const [year, setYear] = useState("");
       const [error, setError] = useState("");
       const [result, setResult] = useState(null);
-      const [tick, setTick] = useState(0); // لإعادة تشغيل العدّاد عند كل حساب
+      const [tick, setTick] = useState(0);
+
+      const years = [];
+      for (let y = thisYear; y >= thisYear - 120; y--) years.push(y);
+      const days = [];
+      for (let d = 1; d <= 31; d++) days.push(d);
 
       function compute() {
         setError("");
-        const n = Number(age);
-        if (age.trim() === "" || !Number.isInteger(n)) {
+        if (day === "" || month === "" || year === "") {
           setResult(null);
-          setError("الرجاء إدخال عمر صحيح (رقم كامل).");
+          setError("الرجاء اختيار اليوم والشهر والسنة.");
           return;
         }
-        if (n < 0 || n > 150) {
+        const d = Number(day), m = Number(month), y = Number(year);
+        const birth = new Date(y, m - 1, d);
+        // التحقق من صحة التاريخ (مثلاً ٣١ فبراير غير صالح)
+        if (birth.getFullYear() !== y || birth.getMonth() !== m - 1 || birth.getDate() !== d) {
           setResult(null);
-          setError("الرجاء إدخال عمر بين ٠ و ١٥٠ سنة.");
+          setError("هذا التاريخ غير صحيح، الرجاء التحقق من اليوم والشهر.");
           return;
         }
-        const gregLatest = currentGregYear - n;
-        const gregEarliest = currentGregYear - n - 1;
-        setResult({
-          gregEarliest, gregLatest,
-          hijriEarliest: gregorianYearToHijri(gregEarliest),
-          hijriLatest: gregorianYearToHijri(gregLatest),
-        });
+        if (birth > TODAY) {
+          setResult(null);
+          setError("تاريخ الميلاد في المستقبل! الرجاء إدخال تاريخ صحيح.");
+          return;
+        }
+
+        const age = exactAge(birth, TODAY);
+        const zodiac = getZodiac(m, d);
+        const hijri = toHijriParts(birth);
+        const gregText = `${toArabicDigits(d)} ${MONTHS_AR[m - 1]} ${toArabicDigits(y)} م`;
+
+        setResult({ age, zodiac, hijri, gregText });
         setTick((t) => t + 1);
       }
-
-      const onKeyDown = (e) => { if (e.key === "Enter") compute(); };
 
       return (
         <div className="plate">
           <div className="eyebrow">
             <span className="line"></span>
-            <span>تقويم العمر</span>
+            <span>تقويم العمر والأبراج</span>
             <span className="line"></span>
           </div>
-          <h1>احسب سنة ميلادك</h1>
-          <p className="sub">أدخل عمرك لتقرأ سنة ميلادك في التقويمين الهجري والميلادي · بتاريخ ٧ يونيو ٢٠٢٦</p>
+          <h1>احسب عمرك وبرجك</h1>
+          <p className="sub">أدخل تاريخ ميلادك لتعرف عمرك بالتفصيل، وبرجك الفلكي، وتاريخك بالتقويمين الهجري والميلادي · بتاريخ ٧ يونيو ٢٠٢٦</p>
 
           <div className="field">
-            <label htmlFor="age">كم عمرك بالسنوات؟</label>
-            <div className="row">
-              <input
-                id="age"
-                type="number"
-                inputMode="numeric"
-                min="0"
-                max="150"
-                placeholder="٣٠"
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
-                onKeyDown={onKeyDown}
-              />
-              <button onClick={compute}>اقرأ التقويم</button>
+            <label>تاريخ ميلادك</label>
+            <div className="date-grid">
+              <div className="col">
+                <select value={day} onChange={(e) => setDay(e.target.value)}>
+                  <option value="">اليوم</option>
+                  {days.map((d) => <option key={d} value={d}>{toArabicDigits(d)}</option>)}
+                </select>
+              </div>
+              <div className="col">
+                <select value={month} onChange={(e) => setMonth(e.target.value)}>
+                  <option value="">الشهر</option>
+                  {MONTHS_AR.map((nm, i) => <option key={i} value={i + 1}>{nm}</option>)}
+                </select>
+              </div>
+              <div className="col">
+                <select value={year} onChange={(e) => setYear(e.target.value)}>
+                  <option value="">السنة</option>
+                  {years.map((y) => <option key={y} value={y}>{toArabicDigits(y)}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="row" style={{ marginTop: "14px" }}>
+              <button style={{ flex: 1 }} onClick={compute}>اكشف النتيجة</button>
             </div>
             <div className="error">{error}</div>
           </div>
@@ -440,26 +587,44 @@
                 <span className="l"></span>
               </div>
 
+              <div className="age-exact">
+                <div className="age-cell">
+                  <div className="num">{toArabicDigits(result.age.years)}</div>
+                  <div className="lbl">سنة</div>
+                </div>
+                <div className="age-cell">
+                  <div className="num">{toArabicDigits(result.age.months)}</div>
+                  <div className="lbl">شهر</div>
+                </div>
+                <div className="age-cell">
+                  <div className="num">{toArabicDigits(result.age.days)}</div>
+                  <div className="lbl">يوم</div>
+                </div>
+              </div>
+
+              <div className="zodiac">
+                <div className="glyph">{result.zodiac.glyph}</div>
+                <div className="meta">
+                  <div className="k">برجك الفلكي</div>
+                  <div className="name">{result.zodiac.name}</div>
+                  <div className="range">{result.zodiac.range}</div>
+                </div>
+              </div>
+
+              <Reading glyph="☼" kicker="تاريخ ميلادك بالميلادي" value={result.gregText} />
               <Reading
                 glyph="☾"
-                kicker="بالتقويم الهجري"
-                earliest={result.hijriEarliest}
-                latest={result.hijriLatest}
-                unit="هـ"
-                run={true}
-                note="تقريبية — السنة الميلادية الواحدة تمتد على سنتين هجريتين."
-              />
-              <Reading
-                glyph="☼"
-                kicker="بالتقويم الميلادي"
-                earliest={result.gregEarliest}
-                latest={result.gregLatest}
-                unit="م"
-                run={true}
-                note="السنة الدقيقة تعتمد على ما إذا كان عيد ميلادك قد مرّ هذه السنة."
+                kicker="تاريخ ميلادك بالهجري"
+                value={result.hijri}
+                note="بحسب تقويم أم القرى."
               />
             </div>
           )}
+
+          <div className="price-badge">
+            <span className="tag">قيمة النظام</span>
+            <span className="amt">$١٠٠٠</span>
+          </div>
 
           <div className="footer">صُمّم كلوحة إسطرلاب · React</div>
         </div>
