@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تقويم العمر · هجري وميلادي</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Cairo (display + body) -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    :root {
+      /* لوحة "الإسطرلاب": نيلي ليلي + نحاس ذهبي */
+      --ink-900: #0b1026;   /* أعمق نيلي */
+      --ink-800: #11173a;
+      --ink-700: #1a2150;
+      --ink-600: #232c66;
+      --brass-400: #e7c873; /* ذهب فاتح */
+      --brass-500: #d4af37; /* نحاس ذهبي */
+      --brass-600: #b8923a;
+      --parchment: #f4ecd8; /* رقّ */
+      --parchment-dim: #cfc6ad;
+      --star: #f6e8b8;
+      --error: #f0a7a0;
+
+      --font-display: "Cairo", sans-serif;
+      --font-body: "Cairo", sans-serif;
+
+      --radius: 18px;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: var(--font-body);
+      color: var(--parchment);
+      background:
+        radial-gradient(1200px 700px at 80% -10%, rgba(212,175,55,0.10), transparent 60%),
+        radial-gradient(900px 600px at 10% 110%, rgba(120,140,255,0.10), transparent 55%),
+        linear-gradient(160deg, var(--ink-900), var(--ink-800) 55%, #070a1c);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 18px;
+      overflow-x: hidden;
+    }
+
+    /* ===== خلفية: نجوم متلألئة + نمط هندسي إسلامي ===== */
+    .sky {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .sky::before {
+      /* حقل نجوم */
+      content: "";
+      position: absolute; inset: 0;
+      background-image:
+        radial-gradient(1.4px 1.4px at 20% 30%, rgba(246,232,184,0.9), transparent),
+        radial-gradient(1.2px 1.2px at 70% 20%, rgba(246,232,184,0.7), transparent),
+        radial-gradient(1.6px 1.6px at 40% 70%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1.1px 1.1px at 85% 60%, rgba(246,232,184,0.6), transparent),
+        radial-gradient(1.3px 1.3px at 55% 45%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1.2px 1.2px at 12% 80%, rgba(246,232,184,0.7), transparent);
+      animation: twinkle 6s ease-in-out infinite alternate;
+    }
+    @keyframes twinkle { from { opacity: 0.5; } to { opacity: 1; } }
+
+    /* قرص الإسطرلاب الدوّار الباهت خلف البطاقة */
+    .astrolabe {
+      position: fixed;
+      width: min(820px, 130vw);
+      height: min(820px, 130vw);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      z-index: 0;
+      opacity: 0.28;
+      background:
+        repeating-conic-gradient(from 0deg, transparent 0 9deg, rgba(212,175,55,0.16) 9deg 9.6deg);
+      mask: radial-gradient(circle, transparent 38%, #000 39%, #000 60%, transparent 61%);
+      -webkit-mask: radial-gradient(circle, transparent 38%, #000 39%, #000 60%, transparent 61%);
+      animation: spin 90s linear infinite;
+    }
+    .astrolabe.inner {
+      width: min(520px, 90vw);
+      height: min(520px, 90vw);
+      opacity: 0.22;
+      animation: spin 60s linear infinite reverse;
+      mask: radial-gradient(circle, transparent 30%, #000 31%, #000 55%, transparent 56%);
+      -webkit-mask: radial-gradient(circle, transparent 30%, #000 31%, #000 55%, transparent 56%);
+      background: repeating-conic-gradient(from 0deg, transparent 0 14deg, rgba(231,200,115,0.18) 14deg 15deg);
+    }
+    @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+    /* ===== اللوحة (البطاقة) ===== */
+    .plate {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 480px;
+      background:
+        linear-gradient(180deg, rgba(26,33,80,0.92), rgba(11,16,38,0.94));
+      border: 1px solid rgba(212,175,55,0.35);
+      border-radius: var(--radius);
+      padding: 40px 34px 34px;
+      box-shadow:
+        0 0 0 1px rgba(212,175,55,0.10),
+        0 30px 80px -20px rgba(0,0,0,0.7),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+      backdrop-filter: blur(2px);
+      animation: rise 0.9s var(--ease) both;
+    }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(26px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* زخارف الزوايا النحاسية */
+    .plate::before, .plate::after {
+      content: "";
+      position: absolute;
+      width: 34px; height: 34px;
+      border: 2px solid var(--brass-500);
+      opacity: 0.7;
+    }
+    .plate::before { top: 12px; right: 12px; border-left: none; border-bottom: none; border-radius: 0 8px 0 0; }
+    .plate::after  { bottom: 12px; left: 12px; border-right: none; border-top: none; border-radius: 0 0 0 8px; }
+
+    .eyebrow {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      font-size: 12px; letter-spacing: 0.18em;
+      color: var(--brass-400);
+      margin-bottom: 14px;
+      animation: fade 0.9s var(--ease) 0.15s both;
+    }
+    .eyebrow span { display: inline-block; }
+    .eyebrow .line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--brass-500), transparent); max-width: 80px; }
+
+    h1 {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: clamp(28px, 7vw, 38px);
+      text-align: center;
+      line-height: 1.25;
+      background: linear-gradient(180deg, #fff, var(--brass-400));
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+      animation: fade 0.9s var(--ease) 0.22s both;
+    }
+    .sub {
+      text-align: center;
+      color: var(--parchment-dim);
+      font-size: 13px;
+      font-weight: 300;
+      margin-bottom: 30px;
+      animation: fade 0.9s var(--ease) 0.3s both;
+    }
+    @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+    label {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 15px;
+      color: var(--brass-400);
+      margin-bottom: 10px;
+    }
+    .field { animation: fade 0.9s var(--ease) 0.38s both; }
+    .row { display: flex; gap: 12px; }
+
+    input {
+      flex: 1;
+      width: 100%;
+      padding: 14px 16px;
+      font-family: var(--font-display);
+      font-size: 22px;
+      text-align: center;
+      color: var(--star);
+      background: rgba(7,10,28,0.6);
+      border: 1.5px solid rgba(212,175,55,0.30);
+      border-radius: 12px;
+      outline: none;
+      transition: border-color 0.25s var(--ease), box-shadow 0.25s var(--ease), background 0.25s;
+    }
+    input::placeholder { color: rgba(207,198,173,0.4); }
+    input:focus {
+      border-color: var(--brass-500);
+      background: rgba(7,10,28,0.85);
+      box-shadow: 0 0 0 4px rgba(212,175,55,0.12), 0 0 24px rgba(212,175,55,0.18);
+    }
+    /* إخفاء أسهم الـ number */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+
+    button {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 600;
+      padding: 0 26px;
+      color: var(--ink-900);
+      background: linear-gradient(180deg, var(--brass-400), var(--brass-600));
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s var(--ease), box-shadow 0.25s var(--ease);
+      box-shadow: 0 8px 20px -6px rgba(212,175,55,0.5);
+      white-space: nowrap;
+    }
+    button:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -6px rgba(212,175,55,0.6); }
+    button:active { transform: translateY(0) scale(0.98); }
+    /* لمعة عابرة */
+    button::after {
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%);
+      transform: translateX(-120%);
+      transition: transform 0.6s var(--ease);
+    }
+    button:hover::after { transform: translateX(120%); }
+
+    .error {
+      color: var(--error);
+      font-size: 13px;
+      margin-top: 12px;
+      min-height: 1.2rem;
+      text-align: center;
+    }
+
+    /* ===== النتائج ===== */
+    .results { margin-top: 28px; }
+
+    .celestial-divider {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      margin: 6px 0 20px;
+      color: var(--brass-400);
+    }
+    .celestial-divider .l { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(212,175,55,0.6), transparent); }
+    .celestial-divider .star { font-size: 14px; animation: pulse 2.4s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 0.5; transform: scale(0.9);} 50% { opacity: 1; transform: scale(1.15);} }
+
+    .reading {
+      position: relative;
+      background: linear-gradient(180deg, rgba(35,44,102,0.55), rgba(11,16,38,0.55));
+      border: 1px solid rgba(212,175,55,0.28);
+      border-radius: 14px;
+      padding: 18px 22px;
+      margin-bottom: 14px;
+      overflow: hidden;
+      animation: revealCard 0.7s var(--ease) both;
+    }
+    .reading:nth-child(2) { animation-delay: 0.05s; }
+    .reading:nth-child(4) { animation-delay: 0.18s; }
+    @keyframes revealCard {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: none; }
+    }
+    /* شريط نحاسي على الحافة */
+    .reading::before {
+      content: ""; position: absolute; top: 0; bottom: 0; right: 0; width: 4px;
+      background: linear-gradient(180deg, var(--brass-400), var(--brass-600));
+    }
+
+    .reading .k {
+      font-family: var(--font-display);
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      color: var(--brass-400);
+      margin-bottom: 6px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .reading .v {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: clamp(28px, 8vw, 38px);
+      color: var(--star);
+      line-height: 1.1;
+    }
+    .reading .v .unit { font-size: 0.5em; color: var(--brass-400); margin-right: 4px; }
+    .reading .note {
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--parchment-dim);
+      margin-top: 8px;
+      line-height: 1.6;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 22px;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: rgba(207,198,173,0.5);
+    }
+
+    @media (max-width: 420px) {
+      .plate { padding: 32px 22px 26px; }
+      .row { flex-direction: column; }
+      button { padding: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sky"></div>
+  <div class="astrolabe"></div>
+  <div class="astrolabe inner"></div>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    function gregorianYearToHijri(gYear) {
+      const date = new Date(gYear, 6, 1); // 1 يوليو
+      const formatted = new Intl.DateTimeFormat("en-u-ca-islamic", { year: "numeric" }).format(date);
+      const m = formatted.match(/\d+/);
+      return m ? parseInt(m[0], 10) : null;
+    }
+
+    function toArabicDigits(value) {
+      const map = { "0":"٠","1":"١","2":"٢","3":"٣","4":"٤","5":"٥","6":"٦","7":"٧","8":"٨","9":"٩" };
+      return String(value).replace(/[0-9]/g, (d) => map[d]);
+    }
+
+    // عدّاد تصاعدي للسنة (إحساس "قراءة فلكية")
+    function useCountUp(target, run, duration = 800) {
+      const [val, setVal] = useState(target);
+      const raf = useRef(null);
+      useEffect(() => {
+        if (target == null || !run) { setVal(target); return; }
+        const start = Math.max(0, target - 60);
+        const t0 = performance.now();
+        const tick = (t) => {
+          const p = Math.min(1, (t - t0) / duration);
+          const eased = 1 - Math.pow(1 - p, 3);
+          setVal(Math.round(start + (target - start) * eased));
+          if (p < 1) raf.current = requestAnimationFrame(tick);
+        };
+        raf.current = requestAnimationFrame(tick);
+        return () => cancelAnimationFrame(raf.current);
+      }, [target, run]);
+      return val;
+    }
+
+    function Reading({ kicker, earliest, latest, unit, note, run, glyph }) {
+      const a = useCountUp(earliest, run);
+      const b = useCountUp(latest, run);
+      const txt = earliest === latest
+        ? toArabicDigits(b)
+        : `${toArabicDigits(a)} – ${toArabicDigits(b)}`;
+      return (
+        <div className="reading">
+          <div className="k"><span>{glyph}</span>{kicker}</div>
+          <div className="v">{txt}<span className="unit">{unit}</span></div>
+          <div className="note">{note}</div>
+        </div>
+      );
+    }
+
+    function App() {
+      const TODAY = new Date(2026, 5, 7);
+      const currentGregYear = TODAY.getFullYear();
+
+      const [age, setAge] = useState("");
+      const [error, setError] = useState("");
+      const [result, setResult] = useState(null);
+      const [tick, setTick] = useState(0); // لإعادة تشغيل العدّاد عند كل حساب
+
+      function compute() {
+        setError("");
+        const n = Number(age);
+        if (age.trim() === "" || !Number.isInteger(n)) {
+          setResult(null);
+          setError("الرجاء إدخال عمر صحيح (رقم كامل).");
+          return;
+        }
+        if (n < 0 || n > 150) {
+          setResult(null);
+          setError("الرجاء إدخال عمر بين ٠ و ١٥٠ سنة.");
+          return;
+        }
+        const gregLatest = currentGregYear - n;
+        const gregEarliest = currentGregYear - n - 1;
+        setResult({
+          gregEarliest, gregLatest,
+          hijriEarliest: gregorianYearToHijri(gregEarliest),
+          hijriLatest: gregorianYearToHijri(gregLatest),
+        });
+        setTick((t) => t + 1);
+      }
+
+      const onKeyDown = (e) => { if (e.key === "Enter") compute(); };
+
+      return (
+        <div className="plate">
+          <div className="eyebrow">
+            <span className="line"></span>
+            <span>تقويم العمر</span>
+            <span className="line"></span>
+          </div>
+          <h1>احسب سنة ميلادك</h1>
+          <p className="sub">أدخل عمرك لتقرأ سنة ميلادك في التقويمين الهجري والميلادي · بتاريخ ٧ يونيو ٢٠٢٦</p>
+
+          <div className="field">
+            <label htmlFor="age">كم عمرك بالسنوات؟</label>
+            <div className="row">
+              <input
+                id="age"
+                type="number"
+                inputMode="numeric"
+                min="0"
+                max="150"
+                placeholder="٣٠"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                onKeyDown={onKeyDown}
+              />
+              <button onClick={compute}>اقرأ التقويم</button>
+            </div>
+            <div className="error">{error}</div>
+          </div>
+
+          {result && (
+            <div className="results" key={tick}>
+              <div className="celestial-divider">
+                <span className="l"></span>
+                <span className="star">✦</span>
+                <span className="l"></span>
+              </div>
+
+              <Reading
+                glyph="☾"
+                kicker="بالتقويم الهجري"
+                earliest={result.hijriEarliest}
+                latest={result.hijriLatest}
+                unit="هـ"
+                run={true}
+                note="تقريبية — السنة الميلادية الواحدة تمتد على سنتين هجريتين."
+              />
+              <Reading
+                glyph="☼"
+                kicker="بالتقويم الميلادي"
+                earliest={result.gregEarliest}
+                latest={result.gregLatest}
+                unit="م"
+                run={true}
+                note="السنة الدقيقة تعتمد على ما إذا كان عيد ميلادك قد مرّ هذه السنة."
+              />
+            </div>
+          )}
+
+          <div className="footer">صُمّم كلوحة إسطرلاب · React</div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
