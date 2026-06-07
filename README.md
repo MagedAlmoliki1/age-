@@ -10,10 +10,6 @@ A single-page React app: enter your birth date to get your **exact age**, your *
 - Accurate Umm al-Qura Hijri date via `Intl.DateTimeFormat` — no external libraries
 - Arabic RTL "astrolabe" theme with the Cairo font
 
-## Pricing
-
-System value: **$1000** (display only; no checkout).
-
 ## Run
 
 No build step required — just open the file in a browser:
