@@ -1,0 +1,170 @@
+/* ============================================================
+   ثيم الإسطرلاب المشترك لصفحات المصادقة (تسجيل الدخول / إنشاء الحساب)
+   نفس لغة index.html البصرية: نيلي ليلي + نحاس ذهبي + خط Cairo
+   ============================================================ */
+:root {
+  --ink-900: #0b1026;
+  --ink-800: #11173a;
+  --ink-700: #1a2150;
+  --brass-400: #e7c873;
+  --brass-500: #d4af37;
+  --brass-600: #b8923a;
+  --parchment: #f4ecd8;
+  --parchment-dim: #cfc6ad;
+  --star: #f6e8b8;
+  --error: #f0a7a0;
+  --ok: #8fd6a0;
+  --font: "Cairo", system-ui, -apple-system, sans-serif;
+  --radius: 18px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+body {
+  font-family: var(--font);
+  color: var(--parchment);
+  background:
+    radial-gradient(1200px 700px at 80% -10%, rgba(212,175,55,0.10), transparent 60%),
+    radial-gradient(900px 600px at 10% 110%, rgba(120,140,255,0.10), transparent 55%),
+    linear-gradient(160deg, var(--ink-900), var(--ink-800) 55%, #070a1c);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 18px;
+  overflow-x: hidden;
+}
+
+.sky { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+.sky::before {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    radial-gradient(1.4px 1.4px at 20% 30%, rgba(246,232,184,0.9), transparent),
+    radial-gradient(1.2px 1.2px at 70% 20%, rgba(246,232,184,0.7), transparent),
+    radial-gradient(1.6px 1.6px at 40% 70%, rgba(255,255,255,0.8), transparent),
+    radial-gradient(1.1px 1.1px at 85% 60%, rgba(246,232,184,0.6), transparent),
+    radial-gradient(1.3px 1.3px at 55% 45%, rgba(255,255,255,0.7), transparent),
+    radial-gradient(1.2px 1.2px at 12% 80%, rgba(246,232,184,0.7), transparent);
+  animation: twinkle 6s ease-in-out infinite alternate;
+}
+@keyframes twinkle { from { opacity: 0.5; } to { opacity: 1; } }
+
+.astrolabe {
+  position: fixed; width: min(820px, 130vw); height: min(820px, 130vw);
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  border-radius: 50%; z-index: 0; opacity: 0.26;
+  background: repeating-conic-gradient(from 0deg, transparent 0 9deg, rgba(212,175,55,0.16) 9deg 9.6deg);
+  mask: radial-gradient(circle, transparent 38%, #000 39%, #000 60%, transparent 61%);
+  -webkit-mask: radial-gradient(circle, transparent 38%, #000 39%, #000 60%, transparent 61%);
+  animation: spin 90s linear infinite;
+}
+.astrolabe.inner {
+  width: min(520px, 90vw); height: min(520px, 90vw); opacity: 0.2;
+  animation: spin 60s linear infinite reverse;
+  mask: radial-gradient(circle, transparent 30%, #000 31%, #000 55%, transparent 56%);
+  -webkit-mask: radial-gradient(circle, transparent 30%, #000 31%, #000 55%, transparent 56%);
+  background: repeating-conic-gradient(from 0deg, transparent 0 14deg, rgba(231,200,115,0.18) 14deg 15deg);
+}
+@keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+.plate {
+  position: relative; z-index: 2; width: 100%; max-width: 440px;
+  background: linear-gradient(180deg, rgba(26,33,80,0.92), rgba(11,16,38,0.94));
+  border: 1px solid rgba(212,175,55,0.35); border-radius: var(--radius);
+  padding: 38px 32px 30px;
+  box-shadow: 0 0 0 1px rgba(212,175,55,0.10), 0 30px 80px -20px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05);
+  backdrop-filter: blur(2px);
+  animation: rise 0.9s var(--ease) both;
+}
+@keyframes rise { from { opacity: 0; transform: translateY(26px) scale(0.98); } to { opacity: 1; transform: none; } }
+.plate::before, .plate::after { content: ""; position: absolute; width: 32px; height: 32px; border: 2px solid var(--brass-500); opacity: 0.7; }
+.plate::before { top: 12px; right: 12px; border-left: none; border-bottom: none; border-radius: 0 8px 0 0; }
+.plate::after  { bottom: 12px; left: 12px; border-right: none; border-top: none; border-radius: 0 0 0 8px; }
+
+.eyebrow {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  font-size: 12px; letter-spacing: 0.18em; color: var(--brass-400); margin-bottom: 12px;
+}
+.eyebrow .line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--brass-500), transparent); max-width: 70px; }
+
+h1 {
+  font-weight: 700; font-size: clamp(26px, 6.5vw, 34px); text-align: center; line-height: 1.25;
+  background: linear-gradient(180deg, #fff, var(--brass-400));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 6px;
+}
+.sub { text-align: center; color: var(--parchment-dim); font-size: 13px; font-weight: 300; margin-bottom: 24px; }
+
+label { display: block; font-size: 14px; color: var(--brass-400); margin-bottom: 8px; margin-top: 16px; }
+
+input {
+  width: 100%; padding: 13px 15px; font-family: var(--font); font-size: 16px;
+  color: var(--star); background: rgba(7,10,28,0.6);
+  border: 1.5px solid rgba(212,175,55,0.30); border-radius: 12px; outline: none;
+  transition: border-color 0.25s var(--ease), box-shadow 0.25s var(--ease), background 0.25s;
+}
+input::placeholder { color: rgba(207,198,173,0.4); }
+input:focus { border-color: var(--brass-500); background: rgba(7,10,28,0.85); box-shadow: 0 0 0 4px rgba(212,175,55,0.12); }
+
+button {
+  width: 100%; font-family: var(--font); font-size: 16px; font-weight: 700;
+  padding: 14px; margin-top: 22px; color: var(--ink-900);
+  background: linear-gradient(180deg, var(--brass-400), var(--brass-600));
+  border: none; border-radius: 12px; cursor: pointer; position: relative; overflow: hidden;
+  transition: transform 0.15s var(--ease), box-shadow 0.25s var(--ease);
+  box-shadow: 0 8px 20px -6px rgba(212,175,55,0.5);
+}
+button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 28px -6px rgba(212,175,55,0.6); }
+button:active:not(:disabled) { transform: translateY(0) scale(0.99); }
+button:disabled { opacity: 0.55; cursor: not-allowed; }
+button::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%);
+  transform: translateX(-120%); transition: transform 0.6s var(--ease);
+}
+button:hover:not(:disabled)::after { transform: translateX(120%); }
+
+/* زر ثانوي (Google) */
+button.ghost {
+  background: rgba(7,10,28,0.5); color: var(--parchment);
+  border: 1.5px solid rgba(212,175,55,0.4); box-shadow: none;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+button.ghost:hover:not(:disabled) { background: rgba(7,10,28,0.8); box-shadow: none; }
+button.ghost::after { display: none; }
+button.ghost svg { width: 18px; height: 18px; }
+
+/* فاصل "أو" */
+.divider { display: flex; align-items: center; gap: 12px; margin: 20px 0 4px; color: var(--parchment-dim); font-size: 12px; }
+.divider .l { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(212,175,55,0.4), transparent); }
+
+/* تبويبات طريقة الدخول */
+.tabs { display: flex; gap: 6px; background: rgba(7,10,28,0.5); border: 1px solid rgba(212,175,55,0.25); border-radius: 12px; padding: 5px; margin-bottom: 8px; }
+.tabs button {
+  flex: 1; width: auto; margin: 0; padding: 9px; font-size: 13px; font-weight: 600;
+  border-radius: 8px; background: transparent; color: var(--parchment-dim); box-shadow: none;
+  transition: background 0.2s, color 0.2s;
+}
+.tabs button::after { display: none; }
+.tabs button.active { background: linear-gradient(180deg, var(--brass-400), var(--brass-600)); color: var(--ink-900); }
+.tabs button:hover:not(.active) { transform: none; color: var(--parchment); box-shadow: none; }
+
+.msg { margin-top: 14px; font-size: 13px; text-align: center; min-height: 1.2rem; line-height: 1.5; }
+.msg.error { color: var(--error); }
+.msg.ok { color: var(--ok); }
+
+.alt { text-align: center; margin-top: 22px; font-size: 13px; color: var(--parchment-dim); }
+.alt a { color: var(--brass-400); text-decoration: none; font-weight: 600; }
+.alt a:hover { text-decoration: underline; }
+
+/* لافتة تحذير عند غياب الإعداد */
+.config-warning {
+  background: rgba(240,167,160,0.12); border: 1px solid rgba(240,167,160,0.4);
+  color: var(--error); border-radius: 12px; padding: 12px 14px; font-size: 12.5px;
+  line-height: 1.7; margin-bottom: 18px;
+}
+.config-warning code { color: var(--star); background: rgba(0,0,0,0.3); padding: 1px 5px; border-radius: 4px; }
+
+@media (max-width: 420px) { .plate { padding: 30px 22px 24px; } }

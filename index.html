@@ -14,6 +14,10 @@
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+  <!-- المصادقة عبر Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+
   <style>
     :root {
       /* لوحة "الإسطرلاب": نيلي ليلي + نحاس ذهبي */
@@ -380,6 +384,32 @@
     }
     .zodiac .meta .range { font-size: 12px; color: var(--parchment-dim); margin-top: 4px; }
 
+    /* ===== شريط المستخدم العلوي ===== */
+    .userbar {
+      position: relative;
+      z-index: 3;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      width: 100%; max-width: 480px;
+      margin-bottom: 14px;
+      animation: fade 0.9s var(--ease) both;
+    }
+    .userbar .who { font-size: 13px; color: var(--parchment-dim); }
+    .userbar .who b { color: var(--brass-400); font-weight: 700; }
+    .userbar .logout {
+      font-family: var(--font-display);
+      font-size: 13px; font-weight: 600;
+      padding: 8px 16px;
+      color: var(--brass-400);
+      background: rgba(7,10,28,0.5);
+      border: 1px solid rgba(212,175,55,0.4);
+      border-radius: 10px; cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+    .userbar .logout:hover { background: rgba(212,175,55,0.15); color: var(--star); }
+
+    /* غلاف عمودي للشريط + اللوحة */
+    .stack { display: flex; flex-direction: column; align-items: center; width: 100%; }
+
     .footer {
       text-align: center;
       margin-top: 22px;
@@ -607,7 +637,64 @@
       );
     }
 
-    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    // ===== حارس المصادقة: لا يُعرض التطبيق إلا بعد التحقق من الجلسة =====
+    function Gate() {
+      const [state, setState] = useState({ loading: true, user: null });
+      const sb = window.getSupabase();
+
+      useEffect(() => {
+        // إن لم تُضبط مفاتيح Supabase بعد، اعرض الحاسبة كوضع تجريبي مفتوح
+        if (!sb) { setState({ loading: false, user: null, noConfig: true }); return; }
+
+        sb.auth.getSession().then(({ data }) => {
+          if (!data.session) {
+            window.location.href = "login.html"; // غير مسجّل → صفحة الدخول
+            return;
+          }
+          setState({ loading: false, user: data.session.user });
+        });
+
+        const { data: sub } = sb.auth.onAuthStateChange((_e, session) => {
+          if (!session) window.location.href = "login.html";
+        });
+        return () => sub.subscription.unsubscribe();
+      }, []);
+
+      async function logout() {
+        if (sb) await sb.auth.signOut();
+        window.location.href = "login.html";
+      }
+
+      if (state.loading) {
+        return (
+          <div className="plate" style={{ textAlign: "center" }}>
+            <div className="eyebrow"><span className="line"></span><span>لحظة…</span><span className="line"></span></div>
+            <h1>جارٍ التحقق</h1>
+            <p className="sub">يتم التأكد من تسجيل دخولك…</p>
+          </div>
+        );
+      }
+
+      const name =
+        state.user?.user_metadata?.full_name ||
+        state.user?.email ||
+        state.user?.phone ||
+        "زائر";
+
+      return (
+        <div className="stack">
+          {!state.noConfig && (
+            <div className="userbar">
+              <div className="who">أهلاً، <b>{name}</b></div>
+              <button className="logout" onClick={logout}>تسجيل الخروج</button>
+            </div>
+          )}
+          <App />
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<Gate />);
   </script>
 </body>
 </html>
